@@ -8,7 +8,7 @@ import (
 
 func main() {
     var input string
-    fmt.Println("Введите выражение (от 1 до 10 включительно для арабских или римских):")
+    fmt.Println("Введите выражение (для арабских или римских):")
     _, err := fmt.Scanln(&input)
     if err != nil {
         panic("Ошибка ввода: " + err.Error())
