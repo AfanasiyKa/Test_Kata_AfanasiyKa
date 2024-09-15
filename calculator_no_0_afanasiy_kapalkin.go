@@ -1,87 +1,130 @@
 package main
 
 import (
-	"fmt"     //"format" - пакет для форматирования, ввода и вывода текста
-	"strings" //этот пакет содержит функции для работы со строками
+    "fmt"
+    "regexp"
+    "strconv"
 )
 
 func main() {
-    
-    fmt.Println("Афанасий Капалкин. E-mail: kafriendly@yandex.ru")
-    
-    fmt.Println("Тестовое задание: «Калькулятор одной строкой».")
-    
-    fmt.Println("Подружить с римскими цифрами на данный момент не удалось, т.к. мне требуется еще время для изучения этого языка програмирования. \nНо есть идея - присвоить арабским цифрам римские символы и продолжить выполнение кода с арабскими цифрами:")
-    fmt.Println("         C: 100, \n         XC: 90, \n         L: 50, \n         XL: 40, \n         X: 10, \n         IX: 9, \n         VIII: 8, \n         VII: 7, \n         VI: 6, \n         V: 5,\n         IV:  4, \n         III: 3, \n         II: 2, \n         I: 1")
-    fmt.Println("\nИтак, собственно, сам консольный калькулятор: \n*********************************************")
-    fmt.Println("")
-	for { // этот цикл будет длиться вечно, пока не будет вызван оператор «break»
-		//распечатать запрос
-		fmt.Print("Введите математическое выражение (например, 3/3 или 2+7): ")
+    var input string
+    fmt.Println("Введите выражение (от 1 до 10 включительно для арабских или римских):")
+    _, err := fmt.Scanln(&input)
+    if err != nil {
+        panic("Ошибка ввода: " + err.Error())
+    }
 
-		//создаем строковую переменную
-		var input string
+    // Регулярное выражение для проверки формата ввода
+    re := regexp.MustCompile(`^(\d|[IVXLCDM]{1,4})\s*([-+*/])\s*(\d|[IVXLCDM]{1,4})$`)
+    matches := re.FindStringSubmatch(input)
 
-		//заполняем переменную данными, введенными пользователем, и переходим на новую строку
-		fmt.Scanln(&input)
+    if matches == nil {
+        panic("Неверный формат ввода")
+    }
 
-		//ПРОВЕРЯЕМ ВЫВОД
-		if strings.TrimSpace(strings.ToLower(input)) == "exit" { //«TrimSpace» возвращает входящую строку, в которой удалены все конечные и начальные пробелы.
-			fmt.Println("Выход из программы...")
-			break
-			// ПЛАН ДЕЙСТВИЙ:
-			//удаляем все пробельные символы, которые может ввести пользователь из поля ввода
-			//строчные буквы во входящей строке
-			//если ввод содержит "exit" - выход
-		}
+    a, operator, b := matches[1], matches[2], matches[3]
 
-		//УДАЛЯЕМ ПРОБЕЛЫ. ОПЕРАТОРЫ
-		// разделяем входные данные на два операнда и оператор
-		expr := strings.ReplaceAll(input, " ", "") // заменяем все оставшиеся пробелы «ничем»
-		opIndex := strings.IndexAny(expr, "+-*/")  // находим индекс оператора в строке
-		if opIndex == -1 {                         // если оператор не найден - перезапускаем цикл
-			fmt.Println("Ввод должен быть в формате: «цифра оператор (+-*/) цифра»")
-			continue
-		}
-		op := expr[opIndex]                                                  //берем оператор из строки
-		operands := strings.Split(expr[0:opIndex]+","+expr[opIndex+1:], ",") //отделяем операнды от строки и помещаем их как элементы внутри среза
+    // Проверка, является ли ввод арабскими числами
+    var isArabic bool
+    if isArabicNumber(a) && isArabicNumber(b) {
+        isArabic = true
+    } else if isRomanNumber(a) && isRomanNumber(b) {
+        // Проверка, является ли ввод римскими числами
+    } else {
+        panic("Соблюдайте правила ввода")
+    }
 
-		//ПРЕОБРАЗОВЫВАЕМ ОПЕРАНДЫ В ЧИСЛА
-		var num1, num2 float64
-		n, err := fmt.Sscanf(operands[0]+" "+operands[1], "%f %f", &num1, &num2)
-		//Sscanf берет строку (operands[0]+" "operands[1]), форматируем строку (%f %f) для указания вывода из строки и указатели для сохранения вывода.
-		//Sscanf изменяет num1 и num2 и возвращает количество выполненных назначений (n) и ошибку, если таковая имеется.
-		if n != 2 || err != nil { //Если операндов больше двух или произошла ошибка, то цикл перезапускается
-			fmt.Println("Ввод должен быть в формате: «цифра оператор (+-*/) цифра»")
-			continue
-		}
-		if num1 == 0 {
-            fmt.Print("Пожалуйста не используйте «0»! \n")
-            continue
-		}
-		
-		if num2 == 0 {
-            fmt.Print("Пожалуйста не используйте «0»! \n")
-            continue
-		}
-	
-		//Создаем расчеты
-		var result float64
-		switch op {
-		case '+':
-			result = num1 + num2
-		case '-':
-			result = num1 - num2
-		case '*':
-			result = num1 * num2
-		case '/':
-			result = num1 / num2
-		default:
-			fmt.Println("Недопустимый оператор")
-			continue
-		}
+    var num1, num2 int
+    if isArabic {
+        num1 = toArabic(a)
+        num2 = toArabic(b)
+    } else {
+        num1 = toRoman(a)
+        num2 = toRoman(b)
+    }
 
-		fmt.Printf("%g %c %g = %.f\n", num1, op, num2, result) //последовательность вывода результата первая цифра, оператор и вторая цифра
-		//
-	}
+    var result int
+    switch operator {
+    case "+":
+        result = num1 + num2
+    case "-":
+        if isArabic || num1-num2 > 0 {
+            result = num1 - num2
+        } else {
+            panic("Результат не может быть отрицательным для римских чисел")
+        }
+    case "*":
+        result = num1 * num2
+    case "/":
+        if num2 == 0 {
+            panic("Ошибка деления на ноль")
+        }
+        result = num1 / num2
+    default:
+        panic("Неверный оператор")
+    }
+
+    if isArabic {
+        fmt.Println(result)
+    } else {
+        // Для римских чисел, если результат < 1, вызывать панику
+        if result < 1 {
+            panic("Результат меньше 1, что недопустимо для римских чисел")
+        }
+        fmt.Println(toRomanOutput(result))
+    }
 }
+
+// Проверка, является ли строка арабским числом
+func isArabicNumber(s string) bool {
+    num, err := strconv.Atoi(s)
+    return err == nil && num >= 1 && num <= 10
+}
+
+// Проверка, является ли строка римским числом
+func isRomanNumber(s string) bool {
+    return regexp.MustCompile(`^(I|V|X|L|C|D|M)+$`).MatchString(s)
+}
+
+// Преобразование римского числа в арабское
+func toRoman(s string) int {
+    roman := map[rune]int{
+        'I': 1, 'V': 5, 'X': 10,
+        'L': 50, 'C': 100, 'D': 500, 'M': 1000,
+    }
+    sum, prev := 0, 0
+    for i := len(s) - 1; i >= 0; i-- {
+        current := roman[rune(s[i])]
+        if current < prev {
+            sum -= current
+        } else {
+            sum += current
+        }
+        prev = current
+    }
+    return sum
+}
+
+// Преобразование арабского числа в римское
+func toRomanOutput(num int) string {
+    vals := []int{1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1}
+    romans := []string{"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"}
+    result := ""
+    for i, v := range vals {
+        for num >= v {
+            num -= v
+            result += romans[i]
+        }
+    }
+    return result
+}
+
+// Преобразование арабского числа (строка) в целое значение
+func toArabic(s string) int {
+    num, err := strconv.Atoi(s)
+    if err != nil || num < 1 || num > 10 {
+        panic("Недопустимые арабские числа. Должно быть от 1 до 10.")
+    }
+    return num
+}
+
